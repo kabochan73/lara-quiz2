@@ -3,6 +3,7 @@
 use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\QuestionController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,4 +32,7 @@ Route::middleware('auth')->group(function () {
     // 回答フロー。1〜10問まとめて回答→まとめて採点。
     Route::get('/answers/create', [AnswerController::class, 'create'])->name('answers.create');
     Route::post('/answers', [AnswerController::class, 'store'])->name('answers.store');
+
+    // 回答履歴・得点推移
+    Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
 });
