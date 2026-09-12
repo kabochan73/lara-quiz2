@@ -23,6 +23,6 @@
     @endforeach
 
     <div class="card">
-        <a class="btn-small" href="{{ route('questions.index') }}">問題一覧に戻る</a>
+        <a class="btn-small" href="{{ route('categories.show', $category) }}">カテゴリに戻る</a>
     </div>
 </x-layout>

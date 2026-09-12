@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Answer;
+use App\Models\Category;
 use App\Models\Question;
 use App\Models\User;
 use App\Services\Grading\GradingService;
@@ -20,32 +21,34 @@ class AnswerController extends Controller
 
     /**
      * 選択した問題(1〜10問)に対する一括回答フォームを表示する。
-     * 問題一覧の「回答する」ボタンから ?ids[]=1&ids[]=2... という形で遷移してくる。
+     * カテゴリ詳細ページの「回答する」ボタンから ?ids[]=1&ids[]=2... という形で遷移してくる。
+     * 要件定義どおり、回答は同じカテゴリ内の問題だけで完結させる(カテゴリをまたいだ回答はしない)。
      */
-    public function create(Request $request): View|RedirectResponse
+    public function create(Request $request, Category $category): View|RedirectResponse
     {
         $data = $request->validate([
             'ids' => ['required', 'array', 'min:1', 'max:10'],
             'ids.*' => ['integer'],
         ]);
 
-        // 自分の問題だけに絞り込む(他人の問題IDが紛れ込んでいても無視する)
-        $questions = Question::whereIn('id', $data['ids'])
+        // 自分の問題、かつこのカテゴリに属する問題だけに絞り込む
+        $questions = $category->questions()
+            ->whereIn('id', $data['ids'])
             ->where('user_id', $request->user()->id)
             ->get();
 
         if ($questions->isEmpty()) {
-            return redirect()->route('questions.index')->with('status', '回答する問題が選択されていません。');
+            return redirect()->route('categories.show', $category)->with('status', '回答する問題が選択されていません。');
         }
 
-        return view('answers.create', compact('questions'));
+        return view('answers.create', compact('category', 'questions'));
     }
 
     /**
      * 選んだ全問題の回答をまとめて保存し、その場で採点して結果を表示する。
      * 採点自体は1回のGradingService呼び出しにまとめて渡す(要件定義: 1リクエストで一括採点)。
      */
-    public function store(Request $request): View|RedirectResponse
+    public function store(Request $request, Category $category): View|RedirectResponse
     {
         $data = $request->validate([
             'grading_level' => ['required', 'in:easy,normal,hard'],
@@ -56,9 +59,11 @@ class AnswerController extends Controller
 
         $user = $request->user();
 
-        // 送られてきた問題IDが本当に自分の問題かを確認する(他人の問題を混ぜて送られても弾く)
+        // 送られてきた問題IDが、本当に自分の・このカテゴリの問題かを確認する
+        // (他人の問題や他カテゴリの問題が混ざっていても弾く)
         $questionIds = collect($data['answers'])->pluck('question_id')->unique();
-        $questions = Question::whereIn('id', $questionIds)
+        $questions = $category->questions()
+            ->whereIn('id', $questionIds)
             ->where('user_id', $user->id)
             ->get()
             ->keyBy('id');
@@ -104,7 +109,7 @@ class AnswerController extends Controller
             $answers->push($answer->load('score', 'question'));
         }
 
-        return view('answers.result', compact('answers'));
+        return view('answers.result', compact('category', 'answers'));
     }
 
     /**

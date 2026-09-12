@@ -10,7 +10,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('answers.store') }}">
+        <form method="POST" action="{{ route('answers.store', $category) }}">
             @csrf
 
             {{-- 採点レベルはこのバッチ全体に1つだけ適用される --}}
