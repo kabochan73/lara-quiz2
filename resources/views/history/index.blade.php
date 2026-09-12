@@ -3,21 +3,29 @@
         <p style="color:#888; font-size:12px; margin:0 0 8px;">
             <a href="{{ route('categories.show', $category) }}">{{ $category->name }}</a>
         </p>
-        <h1>回答履歴(直近{{ $answers->count() }}件)</h1>
+        <h1>履歴</h1>
+        <p style="color:#888; font-size:13px; margin:0;">
+            「全問に回答する」を1回行うごとに、1件の履歴として記録されます。
+        </p>
     </div>
 
     <div class="card">
-        @forelse ($answers as $answer)
-            <a href="{{ route('history.show', [$category, $answer]) }}" style="text-decoration:none; color:inherit;">
+        @forelse ($attempts as $attempt)
+            @php
+                $average = $attempt->answers->isNotEmpty()
+                    ? round($attempt->answers->avg(fn ($a) => $a->score->score))
+                    : null;
+            @endphp
+            <a href="{{ route('history.show', [$category, $attempt]) }}" style="text-decoration:none; color:inherit;">
                 <div class="row">
                     <div>
-                        {{ $answer->question->excerpt() }}
+                        {{ $attempt->created_at->format('Y/m/d H:i') }}
                         <span style="color:#888; font-size:12px;">
-                            {{ $answer->created_at->format('Y/m/d H:i') }}
-                            ・{{ ['easy' => '優しい', 'normal' => '普通', 'hard' => '厳しい'][$answer->score->grading_level] }}
+                            {{ $attempt->answers->count() }}問
+                            ・{{ ['easy' => '優しい', 'normal' => '普通', 'hard' => '厳しい'][$attempt->grading_level] }}
                         </span>
                     </div>
-                    <strong>{{ $answer->score->score }}点</strong>
+                    <strong>平均 {{ $average }}点</strong>
                 </div>
             </a>
         @empty

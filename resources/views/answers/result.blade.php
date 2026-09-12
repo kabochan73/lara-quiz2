@@ -3,7 +3,7 @@
         <h1>採点結果</h1>
         <p style="color:#888; font-size:13px; margin:0;">
             採点レベル:
-            {{ ['easy' => '優しい', 'normal' => '普通', 'hard' => '厳しい'][$answers->first()->score->grading_level] }}
+            {{ ['easy' => '優しい', 'normal' => '普通', 'hard' => '厳しい'][$answers->first()->attempt->grading_level] }}
             /
             {{ $answers->count() }}問
         </p>
@@ -24,5 +24,6 @@
 
     <div class="card">
         <a class="btn-small" href="{{ route('categories.show', $category) }}">カテゴリに戻る</a>
+        <a class="btn-small" href="{{ route('history.index', $category) }}">履歴一覧を見る</a>
     </div>
 </x-layout>

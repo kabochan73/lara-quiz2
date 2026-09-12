@@ -40,5 +40,5 @@ Route::middleware('auth')->group(function () {
 
     // カテゴリ単位の回答履歴(直近10件)・履歴詳細
     Route::get('/categories/{category}/history', [HistoryController::class, 'index'])->name('history.index');
-    Route::get('/categories/{category}/history/{answer}', [HistoryController::class, 'show'])->name('history.show');
+    Route::get('/categories/{category}/history/{attempt}', [HistoryController::class, 'show'])->name('history.show');
 });

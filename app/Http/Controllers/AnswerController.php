@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Answer;
+use App\Models\Attempt;
 use App\Models\Category;
 use App\Models\Question;
 use App\Models\User;
@@ -79,6 +80,13 @@ class AnswerController extends Controller
             return back()->withInput()->withErrors(['grading' => 'AI採点でエラーが発生しました。しばらくしてから再度お試しください。']);
         }
 
+        // この「1回分の全問回答」をまとめるAttemptを先に作り、各Answerをそこにぶら下げる
+        // (履歴画面でUdemyのクイズ結果のように挑戦単位で一覧・詳細表示するため)
+        $attempt = $category->attempts()->create([
+            'user_id' => $user->id,
+            'grading_level' => $data['grading_level'],
+        ]);
+
         $answers = collect();
 
         foreach ($data['answers'] as $i => $a) {
@@ -86,17 +94,19 @@ class AnswerController extends Controller
 
             $answer = $question->answers()->create([
                 'user_id' => $user->id,
+                'attempt_id' => $attempt->id,
                 'body' => $a['body'],
             ]);
 
             $answer->score()->create([
                 'score' => $results[$i]['score'],
                 'feedback' => $results[$i]['feedback'],
-                'grading_level' => $data['grading_level'],
             ]);
 
             $this->pruneOldAnswers($question, $user);
 
+            // attemptは作成済みのものをそのまま使い回す(answers.resultビューが参照するため)
+            $answer->setRelation('attempt', $attempt);
             $answers->push($answer->load('score', 'question'));
         }
 
@@ -106,6 +116,8 @@ class AnswerController extends Controller
     /**
      * 同じ問題への解答は直近10件だけ残し、それより古いものは削除する(要件定義: 履歴の自動整理)。
      * PostgreSQLはDELETE文にLIMITを使えないので、先に消す対象のIDを絞り込んでから削除する。
+     * 削除の結果、回答が1件も残らなくなった挑戦(Attempt)は挑戦自体も削除して履歴から消す
+     * (カテゴリの全問を毎回一括回答する仕様上、古い挑戦の回答は全問題でほぼ同時にこの上限へ達する)。
      */
     private function pruneOldAnswers(Question $question, User $user): void
     {
@@ -115,8 +127,14 @@ class AnswerController extends Controller
             ->pluck('id')
             ->slice(10);
 
-        if ($staleIds->isNotEmpty()) {
-            Answer::whereIn('id', $staleIds)->delete();
+        if ($staleIds->isEmpty()) {
+            return;
         }
+
+        $staleAttemptIds = Answer::whereIn('id', $staleIds)->pluck('attempt_id')->unique();
+
+        Answer::whereIn('id', $staleIds)->delete();
+
+        Attempt::whereIn('id', $staleAttemptIds)->whereDoesntHave('answers')->delete();
     }
 }
