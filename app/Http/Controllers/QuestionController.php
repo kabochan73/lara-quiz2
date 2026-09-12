@@ -22,7 +22,6 @@ class QuestionController extends Controller
     public function store(Request $request, Category $category): RedirectResponse
     {
         $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
         ]);
 
@@ -59,7 +58,6 @@ class QuestionController extends Controller
         $this->authorizeOwner($question);
 
         $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
             'category_id' => ['required', 'exists:categories,id'],
         ]);

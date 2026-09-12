@@ -22,7 +22,7 @@ return new class extends Migration
                 ->constrained('categories')
                 ->cascadeOnDelete();
 
-            $table->string('title');
+            // タイトルは持たない。一覧などでは本文の先頭を短く切り出して表示する(Question::excerpt())
             $table->text('body');
             $table->timestamps();
         });
