@@ -16,7 +16,7 @@
         @forelse ($categories as $category)
             <div class="row">
                 <a href="{{ route('categories.show', $category) }}">{{ $category->name }}</a>
-                <span style="color:#888; font-size:12px;">{{ $category->children_count }}個の子カテゴリ</span>
+                <span style="color:#888; font-size:12px;">{{ $category->sections_count }}個のセクション</span>
             </div>
         @empty
             <p>まだカテゴリがありません。「+ 新規カテゴリ作成」から作成してください。</p>
