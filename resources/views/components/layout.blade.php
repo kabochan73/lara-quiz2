@@ -136,9 +136,8 @@
     @auth
         <nav>
             <div class="links">
-                <a href="{{ route('home') }}">ホーム</a>
-                <a href="{{ route('questions.index') }}">問題</a>
                 <a href="{{ route('categories.index') }}">カテゴリ</a>
+                <a href="{{ route('questions.index') }}">問題</a>
                 <a href="{{ route('history.index') }}">履歴</a>
             </div>
             <form method="POST" action="{{ route('logout') }}">

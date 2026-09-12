@@ -20,9 +20,6 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
-    // 問題管理・回答・履歴は未実装。実装するまでの仮の着地点。
-    Route::view('/home', 'home')->name('home');
-
     // カテゴリ管理(親子2階層)。showは使わないので除外。
     Route::resource('categories', CategoryController::class)->except(['show', 'create']);
 

@@ -39,7 +39,8 @@ class LoginController extends Controller
         // セッション固定攻撃を防ぐため、ログイン成功時にセッションIDを再発行する
         $request->session()->regenerate();
 
-        return redirect()->intended(route('home'));
+        // ログイン後の着地点はカテゴリ画面にする
+        return redirect()->intended(route('categories.index'));
     }
 
     /**
