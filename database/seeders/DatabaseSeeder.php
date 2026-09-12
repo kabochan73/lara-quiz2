@@ -12,14 +12,19 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * このアプリは会員登録機能を持たず、ログインできるのは管理者1名のみ(要件定義2章)。
+     * そのため、そのただ1人のアカウントをSeederで直接投入する。
+     * プロトタイプの個人利用なので、.envに分離せずここに固定値で書く。
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin',
+                'password' => 'password',
+            ]
+        );
     }
 }
