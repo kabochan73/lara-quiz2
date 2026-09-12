@@ -41,12 +41,12 @@ class QuestionController extends Controller
         ]);
 
         // category_idはURLで指定されたカテゴリに固定する(ユーザー入力のcategory_idは信用しない)
-        $question = $category->questions()->create([
+        $category->questions()->create([
             ...$data,
             'user_id' => $request->user()->id,
         ]);
 
-        return redirect()->route('questions.show', $question)->with('status', '問題を作成しました。');
+        return redirect()->route('categories.show', $category)->with('status', '問題を作成しました。');
     }
 
     /**
