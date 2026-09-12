@@ -8,7 +8,9 @@ use App\Models\User;
 use App\Services\Grading\GradingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Throwable;
 
 class AnswerController extends Controller
 {
@@ -43,7 +45,7 @@ class AnswerController extends Controller
      * 選んだ全問題の回答をまとめて保存し、その場で採点して結果を表示する。
      * 採点自体は1回のGradingService呼び出しにまとめて渡す(要件定義: 1リクエストで一括採点)。
      */
-    public function store(Request $request): View
+    public function store(Request $request): View|RedirectResponse
     {
         $data = $request->validate([
             'grading_level' => ['required', 'in:easy,normal,hard'],
@@ -71,7 +73,15 @@ class AnswerController extends Controller
             ])
             ->all();
 
-        $results = $this->grader->grade($items, $data['grading_level']);
+        // Claude APIの通信エラーやキー未設定など、外部サービス起因の失敗は普通に起こりうるので、
+        // 500エラーにせず入力内容を保持したままフォームへ差し戻す。
+        try {
+            $results = $this->grader->grade($items, $data['grading_level']);
+        } catch (Throwable $e) {
+            Log::error('AI採点に失敗しました', ['exception' => $e]);
+
+            return back()->withInput()->withErrors(['grading' => 'AI採点でエラーが発生しました。しばらくしてから再度お試しください。']);
+        }
 
         $answers = collect();
 

@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Services\Grading\FakeGradingService;
+use App\Services\Grading\ClaudeGradingService;
 use App\Services\Grading\GradingService;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,9 +13,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // AI採点(Claude API)ができるまでの仮実装をつないでおく。
-        // 実装したら、ここをClaudeGradingServiceなどに差し替えるだけでよい。
-        $this->app->bind(GradingService::class, FakeGradingService::class);
+        // AI採点はClaude API(ClaudeGradingService)で行う。
+        // テストやローカルでAPIを呼びたくないときはFakeGradingServiceに差し替え可能。
+        $this->app->bind(GradingService::class, ClaudeGradingService::class);
     }
 
     /**

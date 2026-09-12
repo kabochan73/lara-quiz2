@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // AI採点で使うClaude API
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+    ],
+
 ];
