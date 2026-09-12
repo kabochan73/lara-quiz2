@@ -18,17 +18,30 @@
         </form>
     </div>
 
+    {{--
+        問題を選んで回答するためのフォーム。中身の各行にも削除用のPOSTフォームがあり、
+        HTMLはform同士の入れ子を許さないので、この<form>はここでは要素を持たず、
+        チェックボックス・送信ボタン側からform属性で紐づける形にしている。
+    --}}
+    <form id="answer-select-form" method="GET" action="{{ route('answers.create') }}"></form>
+
     <div class="card">
         <div class="row" style="border-bottom:none;">
             <h2 style="margin:0;">{{ $questions->count() }}件</h2>
-            <a class="btn-small" href="{{ route('questions.create') }}" style="background:#2f5233;color:#fff;padding:6px 12px;border-radius:4px;text-decoration:none;">
-                + 新しい問題を作成
-            </a>
+            <span>
+                <button type="submit" form="answer-select-form" class="btn-small" style="background:#2f5233;">
+                    選択した問題に回答する(1〜10問)
+                </button>
+                <a class="btn-small" href="{{ route('questions.create') }}" style="background:#555;color:#fff;text-decoration:none;">
+                    + 新しい問題を作成
+                </a>
+            </span>
         </div>
 
         @forelse ($questions as $question)
             <div class="row">
                 <div>
+                    <input type="checkbox" name="ids[]" value="{{ $question->id }}" form="answer-select-form">
                     <a href="{{ route('questions.show', $question) }}">{{ $question->title }}</a>
                     @if ($question->category)
                         <span style="color:#888; font-size:12px;">

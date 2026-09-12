@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AnswerController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\QuestionController;
@@ -26,4 +27,8 @@ Route::middleware('auth')->group(function () {
 
     // 問題管理。詳細プレビュー(show)も含めてフル装備。
     Route::resource('questions', QuestionController::class);
+
+    // 回答フロー。1〜10問まとめて回答→まとめて採点。
+    Route::get('/answers/create', [AnswerController::class, 'create'])->name('answers.create');
+    Route::post('/answers', [AnswerController::class, 'store'])->name('answers.store');
 });
