@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
 
 // アプリの起点はログイン画面(doc/requirements.md 5章)。ルートは常にログインへ流す。
@@ -18,4 +19,7 @@ Route::middleware('auth')->group(function () {
 
     // 問題管理・回答・履歴は未実装。実装するまでの仮の着地点。
     Route::view('/home', 'home')->name('home');
+
+    // カテゴリ管理(親子2階層)。showは使わないので除外。
+    Route::resource('categories', CategoryController::class)->except(['show', 'create']);
 });
