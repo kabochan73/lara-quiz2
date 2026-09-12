@@ -22,11 +22,8 @@
         <form method="POST" action="{{ route('questions.store', $category) }}">
             @csrf
 
-            <label for="title">タイトル</label>
-            <input type="text" id="title" name="title" value="{{ old('title') }}" required autofocus>
-
             <label for="body">問題文</label>
-            <textarea id="body" name="body" rows="8" required>{{ old('body') }}</textarea>
+            <textarea id="body" name="body" rows="8" required autofocus>{{ old('body') }}</textarea>
 
             <button type="submit">作成する</button>
         </form>

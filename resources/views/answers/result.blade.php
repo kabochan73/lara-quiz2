@@ -11,9 +11,9 @@
 
     @foreach ($answers as $answer)
         <div class="card">
-            <h2>{{ $answer->question->title }}</h2>
+            <p style="white-space: pre-wrap;">{{ $answer->question->body }}</p>
 
-            <p style="color:#555; white-space: pre-wrap;">{{ $answer->body }}</p>
+            <p style="color:#555; white-space: pre-wrap; border-top:1px solid #eee; padding-top:12px;">{{ $answer->body }}</p>
 
             <div class="row" style="border-bottom:none; padding-top:0;">
                 <strong style="font-size:24px;">{{ $answer->score->score }}点</strong>

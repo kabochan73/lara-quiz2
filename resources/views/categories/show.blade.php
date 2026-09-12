@@ -73,12 +73,12 @@
             <div class="row">
                 <div>
                     <input type="checkbox" name="ids[]" value="{{ $question->id }}" form="answer-select-form">
-                    <a href="{{ route('questions.show', $question) }}">{{ $question->title }}</a>
+                    <a href="{{ route('questions.show', $question) }}">{{ $question->excerpt() }}</a>
                 </div>
                 <span>
                     <a class="btn-small" href="{{ route('questions.edit', $question) }}">編集</a>
                     <form class="inline-form" method="POST" action="{{ route('questions.destroy', $question) }}"
-                        onsubmit="return confirm('「{{ $question->title }}」を削除しますか?');">
+                        onsubmit="return confirm('この問題を削除しますか?');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn-small btn-danger">削除</button>

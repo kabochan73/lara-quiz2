@@ -1,4 +1,4 @@
-<x-layout :title="$question->title">
+<x-layout :title="$question->excerpt()">
     <div class="card">
         @if (session('status'))
             <p class="status">{{ session('status') }}</p>
@@ -13,8 +13,6 @@
             @endif
         </p>
 
-        <h1>{{ $question->title }}</h1>
-
         <p style="white-space: pre-wrap;">{{ $question->body }}</p>
 
         <div class="row" style="border-bottom:none; margin-top:24px;">
@@ -22,7 +20,7 @@
             <span>
                 <a class="btn-small" href="{{ route('questions.edit', $question) }}">編集</a>
                 <form class="inline-form" method="POST" action="{{ route('questions.destroy', $question) }}"
-                    onsubmit="return confirm('「{{ $question->title }}」を削除しますか?');">
+                    onsubmit="return confirm('この問題を削除しますか?');">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn-small btn-danger">削除</button>

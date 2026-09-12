@@ -11,7 +11,7 @@
             <a href="{{ route('history.show', [$category, $answer]) }}" style="text-decoration:none; color:inherit;">
                 <div class="row">
                     <div>
-                        {{ $answer->question->title }}
+                        {{ $answer->question->excerpt() }}
                         <span style="color:#888; font-size:12px;">
                             {{ $answer->created_at->format('Y/m/d H:i') }}
                             ・{{ ['easy' => '優しい', 'normal' => '普通', 'hard' => '厳しい'][$answer->score->grading_level] }}

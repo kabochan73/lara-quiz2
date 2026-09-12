@@ -6,7 +6,6 @@
             <a href="{{ route('history.index', $category) }}">履歴</a>
         </p>
 
-        <h1>{{ $answer->question->title }}</h1>
         <p style="color:#888; font-size:12px;">
             {{ $answer->created_at->format('Y/m/d H:i') }}
             ・採点レベル: {{ ['easy' => '優しい', 'normal' => '普通', 'hard' => '厳しい'][$answer->score->grading_level] }}

@@ -32,7 +32,7 @@
 
             @foreach ($questions as $i => $question)
                 <div class="card" style="background:#fafbf9; margin-bottom:16px;">
-                    <h2>{{ $loop->iteration }}. {{ $question->title }}</h2>
+                    <h2>問題 {{ $loop->iteration }}</h2>
                     <p style="white-space: pre-wrap; color:#444;">{{ $question->body }}</p>
 
                     {{-- どの問題への回答かをサーバー側で復元できるよう、問題IDも一緒に送る --}}
