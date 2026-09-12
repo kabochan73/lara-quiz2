@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Answer;
 use App\Models\Attempt;
-use App\Models\Category;
 use App\Models\Question;
+use App\Models\Section;
 use App\Models\User;
 use App\Services\Grading\GradingService;
 use Illuminate\Http\RedirectResponse;
@@ -21,26 +21,26 @@ class AnswerController extends Controller
     }
 
     /**
-     * カテゴリ内の全問題に対する一括回答フォームを表示する。
-     * 1カテゴリは最大10問までしか作れない(QuestionController参照)ので、
-     * 問題を選ばせず「このカテゴリの全問に回答する」という単純な方式にしている。
+     * セクション内の全問題に対する一括回答フォームを表示する。
+     * 1セクションは最大10問までしか作れない(QuestionController参照)ので、
+     * 問題を選ばせず「このセクションの全問に回答する」という単純な方式にしている。
      */
-    public function create(Request $request, Category $category): View|RedirectResponse
+    public function create(Request $request, Section $section): View|RedirectResponse
     {
-        $questions = $category->questions()->where('user_id', $request->user()->id)->get();
+        $questions = $section->questions()->where('user_id', $request->user()->id)->get();
 
         if ($questions->isEmpty()) {
-            return redirect()->route('categories.show', $category)->with('status', 'このカテゴリにはまだ問題がありません。');
+            return redirect()->route('sections.show', $section)->with('status', 'このセクションにはまだ問題がありません。');
         }
 
-        return view('answers.create', compact('category', 'questions'));
+        return view('answers.create', compact('section', 'questions'));
     }
 
     /**
-     * カテゴリ内の全問題の回答をまとめて保存し、その場で採点して結果を表示する。
+     * セクション内の全問題の回答をまとめて保存し、その場で採点して結果を表示する。
      * 採点自体は1回のGradingService呼び出しにまとめて渡す(要件定義: 1リクエストで一括採点)。
      */
-    public function store(Request $request, Category $category): View|RedirectResponse
+    public function store(Request $request, Section $section): View|RedirectResponse
     {
         $data = $request->validate([
             'grading_level' => ['required', 'in:easy,normal,hard'],
@@ -51,10 +51,10 @@ class AnswerController extends Controller
 
         $user = $request->user();
 
-        // 送られてきた問題IDが、本当に自分の・このカテゴリの問題かを確認する
-        // (他人の問題や他カテゴリの問題が混ざっていても弾く)
+        // 送られてきた問題IDが、本当に自分の・このセクションの問題かを確認する
+        // (他人の問題や他セクションの問題が混ざっていても弾く)
         $questionIds = collect($data['answers'])->pluck('question_id')->unique();
-        $questions = $category->questions()
+        $questions = $section->questions()
             ->whereIn('id', $questionIds)
             ->where('user_id', $user->id)
             ->get()
@@ -82,7 +82,7 @@ class AnswerController extends Controller
 
         // この「1回分の全問回答」をまとめるAttemptを先に作り、各Answerをそこにぶら下げる
         // (履歴画面でUdemyのクイズ結果のように挑戦単位で一覧・詳細表示するため)
-        $attempt = $category->attempts()->create([
+        $attempt = $section->attempts()->create([
             'user_id' => $user->id,
             'grading_level' => $data['grading_level'],
         ]);
@@ -110,14 +110,14 @@ class AnswerController extends Controller
             $answers->push($answer->load('score', 'question'));
         }
 
-        return view('answers.result', compact('category', 'answers'));
+        return view('answers.result', compact('section', 'answers'));
     }
 
     /**
      * 同じ問題への解答は直近10件だけ残し、それより古いものは削除する(要件定義: 履歴の自動整理)。
      * PostgreSQLはDELETE文にLIMITを使えないので、先に消す対象のIDを絞り込んでから削除する。
      * 削除の結果、回答が1件も残らなくなった挑戦(Attempt)は挑戦自体も削除して履歴から消す
-     * (カテゴリの全問を毎回一括回答する仕様上、古い挑戦の回答は全問題でほぼ同時にこの上限へ達する)。
+     * (セクションの全問を毎回一括回答する仕様上、古い挑戦の回答は全問題でほぼ同時にこの上限へ達する)。
      */
     private function pruneOldAnswers(Question $question, User $user): void
     {

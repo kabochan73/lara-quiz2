@@ -23,7 +23,7 @@
     @endforeach
 
     <div class="card">
-        <a class="btn-small" href="{{ route('categories.show', $category) }}">カテゴリに戻る</a>
-        <a class="btn-small" href="{{ route('history.index', $category) }}">履歴一覧を見る</a>
+        <a class="btn-small" href="{{ route('sections.show', $section) }}">セクションに戻る</a>
+        <a class="btn-small" href="{{ route('history.index', $section) }}">履歴一覧を見る</a>
     </div>
 </x-layout>
