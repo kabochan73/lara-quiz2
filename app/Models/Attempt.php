@@ -7,17 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * カテゴリ内の全問に一括で回答した「1回分」の記録。
+ * セクション内の全問に一括で回答した「1回分」の記録。
  * Udemyのクイズ結果のように、履歴はこの単位でまとめて表示する
  * (問題ごとではなく、1回の回答セッションごとに一覧・詳細を見る)。
  */
 class Attempt extends Model
 {
-    protected $fillable = ['category_id', 'user_id', 'grading_level'];
+    protected $fillable = ['section_id', 'user_id', 'grading_level'];
 
-    public function category(): BelongsTo
+    public function section(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Section::class);
     }
 
     public function user(): BelongsTo
@@ -26,7 +26,7 @@ class Attempt extends Model
     }
 
     /**
-     * この挑戦で答えた、カテゴリ内の各問題への回答
+     * この挑戦で答えた、セクション内の各問題への回答
      */
     public function answers(): HasMany
     {

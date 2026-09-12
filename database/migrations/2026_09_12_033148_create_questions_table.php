@@ -17,9 +17,9 @@ return new class extends Migration
             // 作成者(今は管理者1人だけだが、将来のマルチユーザー化に備えて残す)
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
-            // カテゴリは必須(未分類は廃止)。カテゴリを削除したら、その問題も連動して削除する
-            $table->foreignId('category_id')
-                ->constrained('categories')
+            // セクションは必須(未分類は廃止)。セクションを削除したら、その問題も連動して削除する
+            $table->foreignId('section_id')
+                ->constrained('sections')
                 ->cascadeOnDelete();
 
             // タイトルは持たない。一覧などでは本文の先頭を短く切り出して表示する(Question::excerpt())

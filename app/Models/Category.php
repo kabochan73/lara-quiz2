@@ -3,42 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
-    protected $fillable = ['parent_id', 'name'];
+    protected $fillable = ['name'];
 
     /**
-     * 親カテゴリ。nullなら自分がトップレベルの親カテゴリ。
+     * このカテゴリに属するセクション一覧。問題はセクションの下にぶら下がる。
      */
-    public function parent(): BelongsTo
+    public function sections(): HasMany
     {
-        return $this->belongsTo(Category::class, 'parent_id');
-    }
-
-    /**
-     * 自分にぶら下がる子カテゴリ一覧(親カテゴリ側から見たとき)
-     */
-    public function children(): HasMany
-    {
-        return $this->hasMany(Category::class, 'parent_id');
-    }
-
-    /**
-     * このカテゴリに分類されている問題一覧
-     */
-    public function questions(): HasMany
-    {
-        return $this->hasMany(Question::class);
-    }
-
-    /**
-     * このカテゴリの全問に一括で回答した挑戦(Attempt)の履歴
-     */
-    public function attempts(): HasMany
-    {
-        return $this->hasMany(Attempt::class);
+        return $this->hasMany(Section::class);
     }
 }

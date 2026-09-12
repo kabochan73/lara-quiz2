@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('categories', function (Blueprint $table) {
+        Schema::create('sections', function (Blueprint $table) {
             $table->id();
 
-            // カテゴリは常にトップレベルの分類。問題を直接持つのはこの下のsections。
+            // カテゴリを削除したら、その中のセクション(と問題・履歴)もすべて連動して削除する
+            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+
             $table->string('name');
             $table->timestamps();
         });
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('categories');
+        Schema::dropIfExists('sections');
     }
 };

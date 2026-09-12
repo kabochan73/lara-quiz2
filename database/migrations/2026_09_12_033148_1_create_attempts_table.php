@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('attempts', function (Blueprint $table) {
             $table->id();
 
-            // カテゴリ内の全問に一括で回答した「1回分」を表す。
-            // カテゴリを削除したら、その挑戦記録もまとめて消す。
-            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+            // セクション内の全問に一括で回答した「1回分」を表す。
+            // セクションを削除したら、その挑戦記録もまとめて消す。
+            $table->foreignId('section_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
             // この挑戦全体に適用された採点レベル(優しい/普通/厳しい)。

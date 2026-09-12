@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class Question extends Model
 {
-    protected $fillable = ['user_id', 'category_id', 'body'];
+    protected $fillable = ['user_id', 'section_id', 'body'];
 
     /**
      * 問題の作成者
@@ -20,11 +20,11 @@ class Question extends Model
     }
 
     /**
-     * 分類先のカテゴリ(未分類の場合はnull)
+     * 分類先のセクション(必須)
      */
-    public function category(): BelongsTo
+    public function section(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Section::class);
     }
 
     /**
