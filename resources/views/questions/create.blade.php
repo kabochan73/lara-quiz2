@@ -1,11 +1,7 @@
 <x-layout title="問題作成">
     <div class="card">
         <p style="color:#888; font-size:12px; margin:0 0 8px;">
-            @if ($category->parent)
-                {{ $category->parent->name }} / {{ $category->name }}
-            @else
-                {{ $category->name }}
-            @endif
+            {{ $section->category->name }} / {{ $section->name }}
         </p>
 
         <h1>問題作成</h1>
@@ -20,11 +16,11 @@
 
         @if ($isFull)
             <p class="status" style="background:#fdecea; color:#b3261e;">
-                このカテゴリはすでに10問に達しているため、これ以上問題を追加できません。
+                このセクションはすでに10問に達しているため、これ以上問題を追加できません。
             </p>
         @else
-            {{-- カテゴリはURLで決まっているので選び直させない。作成後にカテゴリを変えたい場合は編集画面で --}}
-            <form method="POST" action="{{ route('questions.store', $category) }}">
+            {{-- セクションはURLで決まっているので選び直させない。作成後にセクションを変えたい場合は編集画面で --}}
+            <form method="POST" action="{{ route('questions.store', $section) }}">
                 @csrf
 
                 <label for="body">問題文</label>

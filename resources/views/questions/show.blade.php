@@ -5,18 +5,14 @@
         @endif
 
         <p style="color:#888; font-size:12px; margin:0 0 8px;">
-            @if ($question->category->parent)
-                <a href="{{ route('categories.show', $question->category->parent) }}">{{ $question->category->parent->name }}</a>
-                / <a href="{{ route('categories.show', $question->category) }}">{{ $question->category->name }}</a>
-            @else
-                <a href="{{ route('categories.show', $question->category) }}">{{ $question->category->name }}</a>
-            @endif
+            <a href="{{ route('categories.show', $question->section->category) }}">{{ $question->section->category->name }}</a>
+            / <a href="{{ route('sections.show', $question->section) }}">{{ $question->section->name }}</a>
         </p>
 
         <p style="white-space: pre-wrap;">{{ $question->body }}</p>
 
         <div class="row" style="border-bottom:none; margin-top:24px;">
-            <a class="btn-small" href="{{ route('categories.show', $question->category) }}">カテゴリへ戻る</a>
+            <a class="btn-small" href="{{ route('sections.show', $question->section) }}">セクションへ戻る</a>
             <span>
                 <a class="btn-small" href="{{ route('questions.edit', $question) }}">編集</a>
                 <form class="inline-form" method="POST" action="{{ route('questions.destroy', $question) }}"

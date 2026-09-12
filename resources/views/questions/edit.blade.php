@@ -14,8 +14,8 @@
             @csrf
             @method('PUT')
 
-            <label for="category_id">カテゴリ</label>
-            <x-category-select :categories="$categories" :selected="old('category_id', $question->category_id)" />
+            <label for="section_id">セクション</label>
+            <x-section-select :categories="$categories" :selected="old('section_id', $question->section_id)" />
 
             <label for="body">問題文</label>
             <textarea id="body" name="body" rows="8" required autofocus>{{ old('body', $question->body) }}</textarea>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Question;
+use App\Models\Section;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -11,28 +12,28 @@ use Illuminate\View\View;
 class QuestionController extends Controller
 {
     /**
-     * 1カテゴリに置ける問題数の上限。
-     * 「カテゴリ内の全問題に一括で回答する」という回答フローの前提(1回のAPIリクエストで
+     * 1セクションに置ける問題数の上限。
+     * 「セクション内の全問題に一括で回答する」という回答フローの前提(1回のAPIリクエストで
      * 採点できるのは最大10問)を、そもそも問題を作る時点で守らせるための制限。
      */
-    private const MAX_QUESTIONS_PER_CATEGORY = 10;
+    private const MAX_QUESTIONS_PER_SECTION = 10;
 
     /**
-     * 問題作成フォーム。カテゴリはURL(/categories/{category}/questions/create)で決まっているので、
+     * 問題作成フォーム。セクションはURL(/sections/{section}/questions/create)で決まっているので、
      * フォーム側で選び直す必要はない(隠しフィールドで固定)。
      */
-    public function create(Category $category): View
+    public function create(Section $section): View
     {
-        $isFull = $category->questions()->count() >= self::MAX_QUESTIONS_PER_CATEGORY;
+        $isFull = $section->questions()->count() >= self::MAX_QUESTIONS_PER_SECTION;
 
-        return view('questions.create', compact('category', 'isFull'));
+        return view('questions.create', compact('section', 'isFull'));
     }
 
-    public function store(Request $request, Category $category): RedirectResponse
+    public function store(Request $request, Section $section): RedirectResponse
     {
-        if ($category->questions()->count() >= self::MAX_QUESTIONS_PER_CATEGORY) {
+        if ($section->questions()->count() >= self::MAX_QUESTIONS_PER_SECTION) {
             return back()->withInput()->withErrors([
-                'body' => '1つのカテゴリに作れる問題は'.self::MAX_QUESTIONS_PER_CATEGORY.'問までです。',
+                'body' => '1つのセクションに作れる問題は'.self::MAX_QUESTIONS_PER_SECTION.'問までです。',
             ]);
         }
 
@@ -40,13 +41,13 @@ class QuestionController extends Controller
             'body' => ['required', 'string'],
         ]);
 
-        // category_idはURLで指定されたカテゴリに固定する(ユーザー入力のcategory_idは信用しない)
-        $category->questions()->create([
+        // section_idはURLで指定されたセクションに固定する(ユーザー入力のsection_idは信用しない)
+        $section->questions()->create([
             ...$data,
             'user_id' => $request->user()->id,
         ]);
 
-        return redirect()->route('categories.show', $category)->with('status', '問題を作成しました。');
+        return redirect()->route('sections.show', $section)->with('status', '問題を作成しました。');
     }
 
     /**
@@ -63,7 +64,7 @@ class QuestionController extends Controller
     {
         $this->authorizeOwner($question);
 
-        $categories = Category::whereNull('parent_id')->with('children')->orderBy('name')->get();
+        $categories = Category::with('sections')->orderBy('name')->get();
 
         return view('questions.edit', compact('question', 'categories'));
     }
@@ -74,16 +75,16 @@ class QuestionController extends Controller
 
         $data = $request->validate([
             'body' => ['required', 'string'],
-            'category_id' => ['required', 'exists:categories,id'],
+            'section_id' => ['required', 'exists:sections,id'],
         ]);
 
-        // 別のカテゴリに移そうとしている場合、移動先がすでに上限いっぱいでないか確認する
-        if ((int) $data['category_id'] !== $question->category_id) {
-            $newCategoryCount = Category::findOrFail($data['category_id'])->questions()->count();
+        // 別のセクションに移そうとしている場合、移動先がすでに上限いっぱいでないか確認する
+        if ((int) $data['section_id'] !== $question->section_id) {
+            $newSectionCount = Section::findOrFail($data['section_id'])->questions()->count();
 
-            if ($newCategoryCount >= self::MAX_QUESTIONS_PER_CATEGORY) {
+            if ($newSectionCount >= self::MAX_QUESTIONS_PER_SECTION) {
                 return back()->withInput()->withErrors([
-                    'category_id' => '移動先のカテゴリはすでに'.self::MAX_QUESTIONS_PER_CATEGORY.'問に達しています。',
+                    'section_id' => '移動先のセクションはすでに'.self::MAX_QUESTIONS_PER_SECTION.'問に達しています。',
                 ]);
             }
         }
@@ -97,11 +98,11 @@ class QuestionController extends Controller
     {
         $this->authorizeOwner($question);
 
-        $category = $question->category;
+        $section = $question->section;
 
         $question->delete();
 
-        return redirect()->route('categories.show', $category)->with('status', '問題を削除しました。');
+        return redirect()->route('sections.show', $section)->with('status', '問題を削除しました。');
     }
 
     /**
