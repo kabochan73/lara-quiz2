@@ -1,7 +1,8 @@
 <x-layout title="履歴" wide>
     <div class="card">
         <p style="color:#888; font-size:12px; margin:0 0 8px;">
-            <a href="{{ route('categories.show', $category) }}">{{ $category->name }}</a>
+            <a href="{{ route('categories.show', $section->category) }}">{{ $section->category->name }}</a>
+            / <a href="{{ route('sections.show', $section) }}">{{ $section->name }}</a>
         </p>
         <h1>履歴</h1>
         <p style="color:#888; font-size:13px; margin:0;">
@@ -16,7 +17,7 @@
                     ? round($attempt->answers->avg(fn ($a) => $a->score->score))
                     : null;
             @endphp
-            <a href="{{ route('history.show', [$category, $attempt]) }}" style="text-decoration:none; color:inherit;">
+            <a href="{{ route('history.show', [$section, $attempt]) }}" style="text-decoration:none; color:inherit;">
                 <div class="row">
                     <div>
                         {{ $attempt->created_at->format('Y/m/d H:i') }}
