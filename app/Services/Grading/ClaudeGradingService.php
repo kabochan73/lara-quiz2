@@ -12,6 +12,11 @@ use RuntimeException;
  * 要件定義どおりの方針で、選択された全問題を1回のAPIリクエストにまとめて送る。
  * 採点結果はtool use(function calling)で厳密なJSON構造として受け取ることで、
  * 自由文からのパース失敗を避けている。
+ *
+ * バージョン番号や時事情報のように「時間とともに変わる事実」を含む問題は、
+ * AI自身の学習時点の知識が古いと誤採点の原因になる(例: 実際は最新版なのに
+ * 「古い情報と食い違う」という理由で不正解にしてしまう)。これを避けるため、
+ * Web検索ツールを渡し、必要なら採点前に最新情報を確認できるようにしている。
  */
 class ClaudeGradingService implements GradingService
 {
@@ -19,36 +24,71 @@ class ClaudeGradingService implements GradingService
 
     private const API_VERSION = '2023-06-01';
 
+    // web_searchを挟むと、稀に検索だけして最後にsubmit_gradesを呼ばずに終わることがある。
+    // 外部API起因の一時的なブレなので、諦める前に何回か素直にリトライする。
+    private const MAX_ATTEMPTS = 3;
+
     public function grade(array $items, string $level): array
     {
-        $response = Http::withHeaders([
-            'x-api-key' => config('services.anthropic.api_key'),
-            'anthropic-version' => self::API_VERSION,
-        ])
-            ->timeout(60)
-            ->post('https://api.anthropic.com/v1/messages', [
-                'model' => self::MODEL,
-                'max_tokens' => 4096,
-                'system' => $this->systemPrompt($level),
-                'messages' => [
-                    ['role' => 'user', 'content' => $this->userPrompt($items)],
-                ],
-                'tools' => [$this->toolDefinition()],
-                // 自由文で返されるとパースが不安定になるので、必ずこのツールを呼ばせる
-                'tool_choice' => ['type' => 'tool', 'name' => 'submit_grades'],
-            ]);
+        $lastError = null;
 
-        if ($response->failed()) {
-            throw new RuntimeException('Claude APIへのリクエストに失敗しました: '.$response->body());
+        for ($attempt = 1; $attempt <= self::MAX_ATTEMPTS; $attempt++) {
+            $response = Http::withHeaders([
+                'x-api-key' => config('services.anthropic.api_key'),
+                'anthropic-version' => self::API_VERSION,
+            ])
+                ->timeout(90)
+                ->post('https://api.anthropic.com/v1/messages', [
+                    'model' => self::MODEL,
+                    'max_tokens' => 4096,
+                    'system' => $this->systemPrompt($level),
+                    'messages' => [
+                        ['role' => 'user', 'content' => $this->userPrompt($items)],
+                    ],
+                    'tools' => [
+                        $this->webSearchTool(count($items)),
+                        $this->toolDefinition(),
+                    ],
+                    // web_search(必要なら)→submit_gradesの順で呼んでほしいので、
+                    // ここではsubmit_gradesを強制せず、AIの判断に任せる(auto)。
+                    'tool_choice' => ['type' => 'auto'],
+                ]);
+
+            if ($response->failed()) {
+                throw new RuntimeException('Claude APIへのリクエストに失敗しました: '.$response->body());
+            }
+
+            // content配列にはweb_searchのtool_useも混ざりうるので、name指定で確実にsubmit_gradesだけを拾う
+            $toolUse = collect($response->json('content'))
+                ->where('type', 'tool_use')
+                ->firstWhere('name', 'submit_grades');
+
+            if (! $toolUse) {
+                $lastError = 'Claude APIがsubmit_gradesツールを呼ばずに終了しました。';
+
+                continue;
+            }
+
+            try {
+                return $this->buildResults($items, $toolUse['input'] ?? []);
+            } catch (RuntimeException $e) {
+                // 検索を挟むと、稀に問題数と採点結果の件数が食い違うことがある。
+                // 一時的なブレとして扱い、諦める前にもう一度試す。
+                $lastError = $e->getMessage();
+            }
         }
 
-        $toolUse = collect($response->json('content'))->firstWhere('type', 'tool_use');
+        throw new RuntimeException($lastError ?? 'Claude APIから採点結果が返ってきませんでした。');
+    }
 
-        if (! $toolUse) {
-            throw new RuntimeException('Claude APIから採点結果が返ってきませんでした。');
-        }
-
-        $grades = collect($this->extractGrades($toolUse['input'] ?? []))->keyBy('index');
+    /**
+     * submit_gradesツールのinputから、$itemsと同じ順番・件数の採点結果配列を組み立てる。
+     * 件数が足りない・indexが噛み合わないなど、AIの出力が不完全な場合はRuntimeExceptionを投げる
+     * (呼び出し元でリトライするための合図)。
+     */
+    private function buildResults(array $items, array $input): array
+    {
+        $grades = collect($this->extractGrades($input))->keyBy('index');
 
         return collect($items)
             ->values()
@@ -105,7 +145,13 @@ class ClaudeGradingService implements GradingService
 
         採点の厳しさ: {$policy}
 
-        必ずsubmit_gradesツールを使い、渡された問題の数だけ採点結果を返してください。
+        ソフトウェアのバージョン番号、時事的な出来事、統計・料金など「時間とともに変わる事実」が
+        問題や回答に含まれる場合、あなたの知識は古い可能性があります。自分の記憶だけを根拠に
+        「不正解」と断定せず、判断に自信が持てないときはweb_searchツールで現在の情報を確認してから
+        採点してください。
+
+        検索が終わったら(検索が不要な問題ではそのまま)、必ずsubmit_gradesツールを使い、
+        渡された問題の数だけ採点結果を返してください。
         PROMPT;
     }
 
@@ -124,6 +170,20 @@ class ClaudeGradingService implements GradingService
                 $item['body']
             ))
             ->implode("\n\n---\n\n");
+    }
+
+    /**
+     * Anthropicがサーバー側で実行してくれるWeb検索ツール。
+     * 1回のリクエストで最大何回まで検索してよいかを問題数に応じて決める
+     * (無制限にすると採点1回あたりの時間・コストが読めなくなるため)。
+     */
+    private function webSearchTool(int $questionCount): array
+    {
+        return [
+            'type' => 'web_search_20250305',
+            'name' => 'web_search',
+            'max_uses' => min(10, max(2, $questionCount * 2)),
+        ];
     }
 
     /**
