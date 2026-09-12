@@ -132,13 +132,14 @@
     </style>
 </head>
 <body>
-    {{-- ログイン済みの画面にだけ、主要画面へのナビゲーションとログアウトボタンを出す --}}
+    {{--
+        ログイン済みの画面にだけナビゲーションを出す。
+        カテゴリ起点の構成に一本化したので、グローバルなリンクはカテゴリ一覧(=実質ホーム)だけでよい。
+    --}}
     @auth
         <nav>
             <div class="links">
-                <a href="{{ route('categories.index') }}">カテゴリ</a>
-                <a href="{{ route('questions.index') }}">問題</a>
-                <a href="{{ route('history.index') }}">履歴</a>
+                <a href="{{ route('categories.index') }}">{{ config('app.name') }}</a>
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

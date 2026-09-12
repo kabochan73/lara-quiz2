@@ -11,16 +11,31 @@ use Illuminate\View\View;
 class CategoryController extends Controller
 {
     /**
-     * 親カテゴリと、それぞれにぶら下がる子カテゴリを一覧表示する。
+     * 親カテゴリの一覧(ログイン後の着地点)。子カテゴリや問題はここには出さず、
+     * それぞれのカテゴリ詳細ページ(show)で見る。
      */
     public function index(): View
     {
         $categories = Category::whereNull('parent_id')
-            ->with('children')
+            ->withCount('children')
             ->orderBy('name')
             ->get();
 
         return view('categories.index', compact('categories'));
+    }
+
+    /**
+     * カテゴリ作成フォーム。
+     * ?parent_id=X 付きでアクセスされた場合は、そのカテゴリの「子カテゴリ作成」になる
+     * (カテゴリ詳細ページの「+ 子カテゴリを追加」から遷移してくる)。
+     */
+    public function create(Request $request): View
+    {
+        $parent = $request->filled('parent_id')
+            ? Category::whereNull('parent_id')->findOrFail($request->integer('parent_id'))
+            : null;
+
+        return view('categories.create', compact('parent'));
     }
 
     /**
@@ -30,9 +45,25 @@ class CategoryController extends Controller
     {
         $data = $request->validate($this->rules());
 
-        Category::create($data);
+        $category = Category::create($data);
 
-        return redirect()->route('categories.index')->with('status', 'カテゴリを追加しました。');
+        return redirect()->route('categories.show', $category)->with('status', 'カテゴリを追加しました。');
+    }
+
+    /**
+     * カテゴリ詳細ページ。
+     * 親カテゴリなら「子カテゴリ一覧+追加ボタン」、子カテゴリなら「問題一覧+追加ボタン」を出す。
+     * どちらも、このカテゴリ直下の問題への「+ 問題を追加」「履歴を見る」の導線を持つ。
+     */
+    public function show(Category $category): View
+    {
+        $category->load(['parent', 'questions' => fn ($query) => $query->latest()]);
+
+        $children = $category->parent_id === null
+            ? $category->children()->withCount('questions')->orderBy('name')->get()
+            : collect();
+
+        return view('categories.show', compact('category', 'children'));
     }
 
     /**
@@ -54,18 +85,22 @@ class CategoryController extends Controller
 
         $category->update($data);
 
-        return redirect()->route('categories.index')->with('status', 'カテゴリを更新しました。');
+        return redirect()->route('categories.show', $category)->with('status', 'カテゴリを更新しました。');
     }
 
     /**
-     * 親カテゴリを削除すると、子カテゴリも連動して削除される
-     * (categoriesテーブルのparent_idにcascadeOnDeleteを設定済み)。
+     * カテゴリを削除する。cascadeOnDeleteにより、配下の子カテゴリ・問題・回答・採点結果も
+     * すべて連動して削除される。削除後は一覧(親を消した場合)か、親の詳細ページ(子を消した場合)へ戻る。
      */
     public function destroy(Category $category): RedirectResponse
     {
+        $parent = $category->parent;
+
         $category->delete();
 
-        return redirect()->route('categories.index')->with('status', 'カテゴリを削除しました。');
+        return $parent
+            ? redirect()->route('categories.show', $parent)->with('status', 'カテゴリを削除しました。')
+            : redirect()->route('categories.index')->with('status', 'カテゴリを削除しました。');
     }
 
     /**

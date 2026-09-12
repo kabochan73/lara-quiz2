@@ -17,11 +17,10 @@ return new class extends Migration
             // 作成者(今は管理者1人だけだが、将来のマルチユーザー化に備えて残す)
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
-            // カテゴリは任意。未分類の問題も作れるようnullableにしている
+            // カテゴリは必須(未分類は廃止)。カテゴリを削除したら、その問題も連動して削除する
             $table->foreignId('category_id')
-                ->nullable()
                 ->constrained('categories')
-                ->nullOnDelete();
+                ->cascadeOnDelete();
 
             $table->string('title');
             $table->text('body');
