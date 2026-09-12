@@ -24,8 +24,7 @@ return new class extends Migration
             // AIからの日本語フィードバックコメント
             $table->text('feedback');
 
-            // 採点時にどの厳しさレベルを選んだか(履歴画面で確認できるように保存しておく)
-            $table->enum('grading_level', ['easy', 'normal', 'hard']);
+            // grading_levelは挑戦(attempts)単位の情報なので、ここでは持たずattempts側で管理する
 
             $table->timestamps();
         });

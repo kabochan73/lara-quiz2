@@ -33,4 +33,12 @@ class Category extends Model
     {
         return $this->hasMany(Question::class);
     }
+
+    /**
+     * このカテゴリの全問に一括で回答した挑戦(Attempt)の履歴
+     */
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(Attempt::class);
+    }
 }

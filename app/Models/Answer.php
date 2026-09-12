@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Answer extends Model
 {
-    protected $fillable = ['question_id', 'user_id', 'body'];
+    protected $fillable = ['question_id', 'user_id', 'attempt_id', 'body'];
 
     /**
      * 解答対象の問題
@@ -16,6 +16,14 @@ class Answer extends Model
     public function question(): BelongsTo
     {
         return $this->belongsTo(Question::class);
+    }
+
+    /**
+     * この解答が属する「1回分の全問回答」(Udemyのクイズ結果のような挑戦単位)
+     */
+    public function attempt(): BelongsTo
+    {
+        return $this->belongsTo(Attempt::class);
     }
 
     /**

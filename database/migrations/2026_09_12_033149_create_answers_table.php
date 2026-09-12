@@ -18,6 +18,9 @@ return new class extends Migration
             $table->foreignId('question_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
+            // どの「1回分の全問回答」に属するか(履歴をUdemyのクイズ結果のように挑戦単位でまとめるため)
+            $table->foreignId('attempt_id')->constrained()->cascadeOnDelete();
+
             $table->text('body');
             $table->timestamps();
         });
