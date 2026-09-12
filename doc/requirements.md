@@ -87,7 +87,8 @@
 ## 4. 非機能要件
 
 - **技術スタック**: Laravel + Blade のみ。Livewire は使用しない。必要な動的UIは通常のフォーム送信 or 素のJS/Alpine.js程度に留める。
-- **DB**: MySQL または SQLite(開発初期はSQLiteで可)。
+- **実行環境**: Docker(自作 docker-compose)。app(PHP-FPM) + nginx + postgres の構成。Laravel Sail は使わない。
+- **DB**: PostgreSQL。
 - **AI連携**: Anthropic Claude API(Messages API)をサーバーサイドから呼び出し。APIキーは `.env` で管理し、リポジトリに含めない。
 - **処理方式**: MVPでは採点をリクエスト同期で実行。レイテンシが問題になる場合はQueueによる非同期化を後続検討。
 - **コスト・乱用対策**: 個人利用のみのため、API呼び出し回数の上限は設けない。

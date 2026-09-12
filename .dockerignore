@@ -1,0 +1,9 @@
+# ビルド時にコンテキストへ含めなくていいもの。
+# appコンテナはbind mountでコードを読むので、ここに書いたものはイメージビルド速度短縮のためだけに意味がある。
+.git
+node_modules
+vendor
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views

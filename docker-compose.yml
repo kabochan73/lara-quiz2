@@ -1,0 +1,44 @@
+# 開発環境一式。app(PHP-FPM) + nginx + postgres の3サービス構成。
+# 起動: docker compose up -d
+# artisanコマンドの実行例: docker compose exec app php artisan migrate
+services:
+  # Laravel本体を動かすPHP-FPMコンテナ
+  app:
+    build:
+      context: ./docker/php
+    volumes:
+      # ホストのプロジェクト一式をそのままマウントするので、
+      # コードを直すたびにイメージを再ビルドする必要はない
+      - ./:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      - db
+
+  # ブラウザからのリクエストを受け、静的ファイルはそのまま、.phpはappコンテナに転送するリバースプロキシ
+  nginx:
+    image: nginx:alpine
+    ports:
+      # ホストの8000番でアクセスできるようにする(http://localhost:8000)
+      - "8000:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  # アプリのデータを保存するPostgreSQL
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: laravel
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: secret
+    volumes:
+      # コンテナを作り直してもデータが消えないよう名前付きボリュームに永続化
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # 必要ならホストのDBクライアント(TablePlus等)からも接続できるように公開
+      - "5432:5432"
+
+volumes:
+  pgdata:
