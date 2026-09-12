@@ -48,33 +48,24 @@
 
     <div class="card">
         <div class="row" style="border-bottom:none;">
-            <h2 style="margin:0;">このカテゴリの問題</h2>
+            <h2 style="margin:0;">このカテゴリの問題({{ $category->questions->count() }}/10)</h2>
             <a class="btn-small" href="{{ route('questions.create', $category) }}" style="background:#2f5233; color:#fff; text-decoration:none;">
                 + 問題を追加
             </a>
         </div>
 
-        {{--
-            チェックボックスで選んだ問題をまとめて回答するためのフォーム。
-            各行の削除フォームと入れ子にならないよう、ここでは空のフォームだけ置いて
-            チェックボックス・送信ボタン側からform属性で紐づける。
-        --}}
-        <form id="answer-select-form" method="GET" action="{{ route('answers.create', $category) }}"></form>
-
+        {{-- 1カテゴリ最大10問なので、問題を選ばせずこのカテゴリの全問にまとめて回答する --}}
         @if ($category->questions->isNotEmpty())
             <div class="row" style="border-bottom:none; padding-top:0;">
-                <button type="submit" form="answer-select-form" class="btn-small" style="background:#2f5233; color:#fff;">
-                    選択した問題に回答する(1〜10問)
-                </button>
+                <a class="btn-small" href="{{ route('answers.create', $category) }}" style="background:#2f5233; color:#fff; text-decoration:none;">
+                    全問({{ $category->questions->count() }}問)に回答する
+                </a>
             </div>
         @endif
 
         @forelse ($category->questions as $question)
             <div class="row">
-                <div>
-                    <input type="checkbox" name="ids[]" value="{{ $question->id }}" form="answer-select-form">
-                    <a href="{{ route('questions.show', $question) }}">{{ $question->excerpt() }}</a>
-                </div>
+                <a href="{{ route('questions.show', $question) }}">{{ $question->excerpt() }}</a>
                 <span>
                     <a class="btn-small" href="{{ route('questions.edit', $question) }}">編集</a>
                     <form class="inline-form" method="POST" action="{{ route('questions.destroy', $question) }}"

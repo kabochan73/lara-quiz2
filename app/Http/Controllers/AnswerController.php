@@ -20,32 +20,23 @@ class AnswerController extends Controller
     }
 
     /**
-     * 選択した問題(1〜10問)に対する一括回答フォームを表示する。
-     * カテゴリ詳細ページの「回答する」ボタンから ?ids[]=1&ids[]=2... という形で遷移してくる。
-     * 要件定義どおり、回答は同じカテゴリ内の問題だけで完結させる(カテゴリをまたいだ回答はしない)。
+     * カテゴリ内の全問題に対する一括回答フォームを表示する。
+     * 1カテゴリは最大10問までしか作れない(QuestionController参照)ので、
+     * 問題を選ばせず「このカテゴリの全問に回答する」という単純な方式にしている。
      */
     public function create(Request $request, Category $category): View|RedirectResponse
     {
-        $data = $request->validate([
-            'ids' => ['required', 'array', 'min:1', 'max:10'],
-            'ids.*' => ['integer'],
-        ]);
-
-        // 自分の問題、かつこのカテゴリに属する問題だけに絞り込む
-        $questions = $category->questions()
-            ->whereIn('id', $data['ids'])
-            ->where('user_id', $request->user()->id)
-            ->get();
+        $questions = $category->questions()->where('user_id', $request->user()->id)->get();
 
         if ($questions->isEmpty()) {
-            return redirect()->route('categories.show', $category)->with('status', '回答する問題が選択されていません。');
+            return redirect()->route('categories.show', $category)->with('status', 'このカテゴリにはまだ問題がありません。');
         }
 
         return view('answers.create', compact('category', 'questions'));
     }
 
     /**
-     * 選んだ全問題の回答をまとめて保存し、その場で採点して結果を表示する。
+     * カテゴリ内の全問題の回答をまとめて保存し、その場で採点して結果を表示する。
      * 採点自体は1回のGradingService呼び出しにまとめて渡す(要件定義: 1リクエストで一括採点)。
      */
     public function store(Request $request, Category $category): View|RedirectResponse

@@ -11,16 +11,31 @@ use Illuminate\View\View;
 class QuestionController extends Controller
 {
     /**
+     * 1カテゴリに置ける問題数の上限。
+     * 「カテゴリ内の全問題に一括で回答する」という回答フローの前提(1回のAPIリクエストで
+     * 採点できるのは最大10問)を、そもそも問題を作る時点で守らせるための制限。
+     */
+    private const MAX_QUESTIONS_PER_CATEGORY = 10;
+
+    /**
      * 問題作成フォーム。カテゴリはURL(/categories/{category}/questions/create)で決まっているので、
      * フォーム側で選び直す必要はない(隠しフィールドで固定)。
      */
     public function create(Category $category): View
     {
-        return view('questions.create', compact('category'));
+        $isFull = $category->questions()->count() >= self::MAX_QUESTIONS_PER_CATEGORY;
+
+        return view('questions.create', compact('category', 'isFull'));
     }
 
     public function store(Request $request, Category $category): RedirectResponse
     {
+        if ($category->questions()->count() >= self::MAX_QUESTIONS_PER_CATEGORY) {
+            return back()->withInput()->withErrors([
+                'body' => '1つのカテゴリに作れる問題は'.self::MAX_QUESTIONS_PER_CATEGORY.'問までです。',
+            ]);
+        }
+
         $data = $request->validate([
             'body' => ['required', 'string'],
         ]);
@@ -61,6 +76,17 @@ class QuestionController extends Controller
             'body' => ['required', 'string'],
             'category_id' => ['required', 'exists:categories,id'],
         ]);
+
+        // 別のカテゴリに移そうとしている場合、移動先がすでに上限いっぱいでないか確認する
+        if ((int) $data['category_id'] !== $question->category_id) {
+            $newCategoryCount = Category::findOrFail($data['category_id'])->questions()->count();
+
+            if ($newCategoryCount >= self::MAX_QUESTIONS_PER_CATEGORY) {
+                return back()->withInput()->withErrors([
+                    'category_id' => '移動先のカテゴリはすでに'.self::MAX_QUESTIONS_PER_CATEGORY.'問に達しています。',
+                ]);
+            }
+        }
 
         $question->update($data);
 
