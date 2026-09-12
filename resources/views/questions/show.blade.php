@@ -4,19 +4,21 @@
             <p class="status">{{ session('status') }}</p>
         @endif
 
-        @if ($question->category)
-            <p style="color:#888; font-size:12px; margin:0 0 8px;">
-                {{ $question->category->parent?->name ?? $question->category->name }}
-                @if ($question->category->parent) / {{ $question->category->name }} @endif
-            </p>
-        @endif
+        <p style="color:#888; font-size:12px; margin:0 0 8px;">
+            @if ($question->category->parent)
+                <a href="{{ route('categories.show', $question->category->parent) }}">{{ $question->category->parent->name }}</a>
+                / <a href="{{ route('categories.show', $question->category) }}">{{ $question->category->name }}</a>
+            @else
+                <a href="{{ route('categories.show', $question->category) }}">{{ $question->category->name }}</a>
+            @endif
+        </p>
 
         <h1>{{ $question->title }}</h1>
 
         <p style="white-space: pre-wrap;">{{ $question->body }}</p>
 
         <div class="row" style="border-bottom:none; margin-top:24px;">
-            <a class="btn-small" href="{{ route('questions.index') }}">一覧へ戻る</a>
+            <a class="btn-small" href="{{ route('categories.show', $question->category) }}">カテゴリへ戻る</a>
             <span>
                 <a class="btn-small" href="{{ route('questions.edit', $question) }}">編集</a>
                 <form class="inline-form" method="POST" action="{{ route('questions.destroy', $question) }}"

@@ -1,5 +1,13 @@
 <x-layout title="問題作成">
     <div class="card">
+        <p style="color:#888; font-size:12px; margin:0 0 8px;">
+            @if ($category->parent)
+                {{ $category->parent->name }} / {{ $category->name }}
+            @else
+                {{ $category->name }}
+            @endif
+        </p>
+
         <h1>問題作成</h1>
 
         @if ($errors->any())
@@ -10,14 +18,12 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('questions.store') }}">
+        {{-- カテゴリはURLで決まっているので選び直させない。作成後にカテゴリを変えたい場合は編集画面で --}}
+        <form method="POST" action="{{ route('questions.store', $category) }}">
             @csrf
 
             <label for="title">タイトル</label>
             <input type="text" id="title" name="title" value="{{ old('title') }}" required autofocus>
-
-            <label for="category_id">カテゴリ</label>
-            <x-category-select :categories="$categories" :selected="old('category_id')" />
 
             <label for="body">問題文</label>
             <textarea id="body" name="body" rows="8" required>{{ old('body') }}</textarea>

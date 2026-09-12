@@ -11,42 +11,26 @@ use Illuminate\View\View;
 class QuestionController extends Controller
 {
     /**
-     * 自分が作成した問題の一覧。タイトルのキーワード検索とカテゴリ絞り込みに対応する。
+     * 問題作成フォーム。カテゴリはURL(/categories/{category}/questions/create)で決まっているので、
+     * フォーム側で選び直す必要はない(隠しフィールドで固定)。
      */
-    public function index(Request $request): View
+    public function create(Category $category): View
     {
-        $questions = Question::query()
-            ->where('user_id', $request->user()->id)
-            ->with('category')
-            ->when($request->filled('q'), fn ($query) => $query->where('title', 'like', '%'.$request->string('q').'%'))
-            ->when($request->filled('category_id'), fn ($query) => $query->where('category_id', $request->integer('category_id')))
-            ->latest()
-            ->get();
-
-        $categories = Category::whereNull('parent_id')->with('children')->orderBy('name')->get();
-
-        return view('questions.index', compact('questions', 'categories'));
+        return view('questions.create', compact('category'));
     }
 
-    /**
-     * 問題作成フォーム。カテゴリは親カテゴリの下に子カテゴリをぶら下げた形で選択肢を出す。
-     */
-    public function create(): View
-    {
-        $categories = Category::whereNull('parent_id')->with('children')->orderBy('name')->get();
-
-        return view('questions.create', compact('categories'));
-    }
-
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, Category $category): RedirectResponse
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
-            'category_id' => ['nullable', 'exists:categories,id'],
         ]);
 
-        $question = $request->user()->questions()->create($data);
+        // category_idはURLで指定されたカテゴリに固定する(ユーザー入力のcategory_idは信用しない)
+        $question = $category->questions()->create([
+            ...$data,
+            'user_id' => $request->user()->id,
+        ]);
 
         return redirect()->route('questions.show', $question)->with('status', '問題を作成しました。');
     }
@@ -77,7 +61,7 @@ class QuestionController extends Controller
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
-            'category_id' => ['nullable', 'exists:categories,id'],
+            'category_id' => ['required', 'exists:categories,id'],
         ]);
 
         $question->update($data);
@@ -89,9 +73,11 @@ class QuestionController extends Controller
     {
         $this->authorizeOwner($question);
 
+        $category = $question->category;
+
         $question->delete();
 
-        return redirect()->route('questions.index')->with('status', '問題を削除しました。');
+        return redirect()->route('categories.show', $category)->with('status', '問題を削除しました。');
     }
 
     /**
